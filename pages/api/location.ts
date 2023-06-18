@@ -6,6 +6,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 
 type Data = {
   message: string;
+  extraInfo?: any;
 };
 
 type payload = {
@@ -23,21 +24,26 @@ export default async function handler(
     return;
   }
 
-  const db = getFirestore();
+  try {
+    const db = getFirestore();
 
-  const { busId, lat, lng }: payload = req.body || {};
+    const { busId, lat, lng }: payload = req.body || {};
 
-  if (!busId || !lat || !lng) {
-    res.status(400).send({ message: "Bad request" });
-    return;
+    if (!busId || !lat || !lng) {
+      res.status(400).send({ message: "Bad request" });
+      return;
+    }
+
+    await db.collection("locations").add({
+      busId: busId,
+      createdAt: Timestamp.now(),
+      lat: lat,
+      lng: lng,
+    });
+
+    res.status(200).json({ message: "Location updated" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "server error", extraInfo: err });
   }
-
-  db.collection("locations").add({
-    busId: busId,
-    createdAt: Timestamp.now(),
-    lat: lat,
-    lng: lng,
-  });
-
-  res.status(200).json({ message: "Location updated" });
 }
