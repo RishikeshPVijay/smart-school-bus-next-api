@@ -44,6 +44,6 @@ export default async function handler(
     res.status(200).json({ message: "Location updated" });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "server error", extraInfo: err });
+    res.status(500).json({ message: "server error" });
   }
 }
