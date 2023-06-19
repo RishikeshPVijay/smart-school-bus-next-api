@@ -1,5 +1,5 @@
 import { initFirebase } from "@/lib/firebase-app";
-import { Bus, Student, StudentLog } from "@/types";
+import { Bus, SSBUser, Student, StudentLog } from "@/types";
 initFirebase();
 
 import { messaging } from "firebase-admin";
@@ -39,20 +39,6 @@ export default async function handler(
       res.status(400).send({ message: "Bad request" });
       return;
     }
-    //    await messaging().send({
-    //   token:
-    //     "eDrlSjaTQrCYeYHGEipd9K:APA91bE0_O4Fwm-OPN_lyu1ABedgJNFB2ZW4YpIF6sjD3aU9fuGGntepVTKMJinM_m6LwEyi53z8TScJO_9N56SQ8HnQJJeOnrvbGGpOowRcqosvRwQuPk4gLjB-2v73xfg8qzx5qjpR",
-    //   notification: {
-    //     title: "My Title",
-    //     body: "TEST",
-    //   },
-    // });
-    // await db.collection("").add({
-    //   busId: busId,
-    //   createdAt: Timestamp.now(),
-    //   lat: lat,
-    //   lng: lng,
-    // });
 
     const studentSnapshot = await db
       .collection("students")
@@ -88,6 +74,7 @@ export default async function handler(
         ? nextStatusMap[(prevLogSnapshot.docs[0].data() as StudentLog).status]
         : "IN";
 
+    const now = Timestamp.now();
     const data: StudentLog = {
       id,
       name,
@@ -99,10 +86,33 @@ export default async function handler(
       lng,
       busId,
       status,
-      createdAt: Timestamp.now(),
+      createdAt: now,
     };
 
     await db.collection("student-logs").add(data);
+
+    const parentSnapshot = await db.collection("users").doc(parent).get();
+
+    if (!parentSnapshot) {
+      res.status(200).json({ message: "Log added" });
+      return;
+    }
+
+    const { token } = parentSnapshot.data() as SSBUser;
+
+    if (token) {
+      const date = now.toDate();
+      await messaging().send({
+        token: token,
+        notification: {
+          title: `${name.split(" ")[0]} got ${status.toLowerCase()}`,
+          body: `${name.split(" ")[0]} got ${status.toLowerCase()} ${
+            status === "IN" ? "to" : "of"
+          } bus at ${date.getHours()}:${date.getMinutes()}`,
+        },
+        data: {},
+      });
+    }
 
     res.status(200).json({ message: "Notified" });
   } catch (err) {

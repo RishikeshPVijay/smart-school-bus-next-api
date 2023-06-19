@@ -1,5 +1,13 @@
 import { Timestamp } from "firebase-admin/firestore";
 
+export type SSBUser = {
+  id: string;
+  name: string;
+  email: string;
+  userType: 'admin' | 'parent';
+  token?: string;
+};
+
 export type Student = {
   id: string;
   busId: string;
