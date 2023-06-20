@@ -12,7 +12,7 @@ type Data = {
 };
 
 type payload = {
-  studentId: string;
+  rfid: string;
   lat: number;
   lng: number;
 };
@@ -33,24 +33,24 @@ export default async function handler(
 
   try {
     const db = getFirestore();
-    const { studentId, lat, lng }: payload = req.body || {};
+    const { rfid, lat, lng }: payload = req.body || {};
 
-    if (!studentId || !lat || !lng) {
+    if (!rfid || !lat || !lng) {
       res.status(400).send({ message: "Bad request" });
       return;
     }
 
     const studentSnapshot = await db
       .collection("students")
-      .doc(studentId)
+      .where("rfid", "==", rfid)
       .get();
 
-    if (!studentSnapshot) {
-      res.status(400).send({ message: "Invalid student id" });
+    if (!studentSnapshot || !studentSnapshot.docs || !studentSnapshot.docs[0]) {
+      res.status(400).send({ message: "Invalid rfid id" });
       return;
     }
 
-    const student = studentSnapshot.data() as Student;
+    const student = studentSnapshot.docs[0].data() as Student;
     const { id, name, parent, admissionNumber, busId } = student;
 
     const busSnapshot = await db.collection("buses").doc(busId).get();
