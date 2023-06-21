@@ -30,7 +30,7 @@ export default async function handler(
     res.status(405).send({ message: "Only POST requests allowed" });
     return;
   }
-
+  process.env.TZ = "Asia/Kolkata";
   try {
     const db = getFirestore();
     const { rfid, lat, lng }: payload = req.body || {};
@@ -108,7 +108,10 @@ export default async function handler(
           title: `${name.split(" ")[0]} got ${status.toLowerCase()}`,
           body: `${name.split(" ")[0]} got ${status.toLowerCase()} ${
             status === "IN" ? "to" : "of"
-          } bus at ${date.getHours()}:${date.getMinutes()}`,
+          } bus at ${date.getHours().toString().padStart(2, "0")}:${date
+            .getMinutes()
+            .toString()
+            .padStart(2, "0")}`,
         },
         data: {},
       });
