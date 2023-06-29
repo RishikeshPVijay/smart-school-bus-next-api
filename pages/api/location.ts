@@ -34,6 +34,13 @@ export default async function handler(
       return;
     }
 
+    const busSnapshot = await db.collection("buses").doc(busId).get();
+
+    if (!busSnapshot) {
+      res.status(400).send({ message: "No bus with provided id" });
+      return;
+    }
+
     await db.collection("locations").add({
       busId: busId,
       createdAt: Timestamp.now(),
